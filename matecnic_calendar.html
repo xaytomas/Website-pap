@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matecnic Calendar — Gestão de Férias</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f1923;
+    --navy-mid: #1a2535;
+    --red: #cc1f1f;
+    --red-bright: #e63030;
+    --white: #f5f2ee;
+    --grey: #8a9ab0;
+    --accent: #4a90d9;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 70% 50%, rgba(204,31,31,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px 80px 80px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-label::before {
+    content: '';
+    width: 32px;
+    height: 2px;
+    background: var(--red);
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 8vw, 7.5rem);
+    line-height: .9;
+    letter-spacing: .02em;
+    margin-bottom: 32px;
+    color: var(--white);
+  }
+
+  .hero-title span { color: var(--red); display: block; }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--grey);
+    max-width: 420px;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .hero-badges { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(245,242,238,.15);
+    padding: 8px 16px;
+    border-radius: 2px;
+    color: var(--grey);
+    transition: all .25s;
+  }
+
+  .badge:hover { border-color: var(--red); color: var(--white); }
+
+  .hero-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 80px 60px;
+  }
+
+  .phone-mockup {
+    width: 220px;
+    height: 440px;
+    background: linear-gradient(160deg, #1e3050 0%, #0f1923 100%);
+    border-radius: 32px;
+    border: 2px solid rgba(255,255,255,.1);
+    box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05) inset;
+    position: relative;
+    overflow: hidden;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(-3deg); }
+    50% { transform: translateY(-16px) rotate(-3deg); }
+  }
+
+  .phone-screen {
+    position: absolute;
+    inset: 8px;
+    border-radius: 26px;
+    background: #0d2045;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+
+  .phone-logo {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    font-size: 20px; font-weight: 900;
+    color: #0d2045;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: .05em;
+  }
+
+  .mini-calendar {
+    background: rgba(255,255,255,.06);
+    border-radius: 10px;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  .mini-cal-header {
+    font-size: .55rem; text-align: center;
+    color: rgba(255,255,255,.5); margin-bottom: 8px;
+    letter-spacing: .1em; font-family: 'DM Mono', monospace;
+  }
+
+  .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+  .mini-cal-day {
+    aspect-ratio: 1; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .45rem; color: rgba(255,255,255,.4);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .mini-cal-day.active { background: var(--accent); color: white; border-radius: 50%; }
+  .mini-cal-day.marked { background: rgba(204,31,31,.4); color: rgba(255,255,255,.8); }
+
+  .phone-btn {
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 20px; width: 90%; padding: 8px;
+    text-align: center; font-size: .5rem;
+    color: rgba(255,255,255,.7); margin-top: 6px;
+    letter-spacing: .1em; text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .hero-decor {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, transparent, var(--red), transparent);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 20px 80px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(15,25,35,.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+
+  .nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: .1em; color: var(--white); }
+  .nav-brand span { color: var(--red); }
+
+  .nav-links { display: flex; gap: 28px; list-style: none; }
+
+  .nav-links a {
+    font-size: .75rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--grey); text-decoration: none; transition: color .2s;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  /* ── SECTIONS ── */
+  section { padding: 100px 80px; position: relative; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: .68rem;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: var(--red); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .section-label::before {
+    content: ''; width: 24px; height: 2px;
+    background: var(--red); display: inline-block;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1; letter-spacing: .03em; margin-bottom: 56px;
+  }
+
+  /* ── ABOUT ── */
+  .about { background: var(--navy-mid); border-top: 1px solid rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.04); }
+
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+
+  .about-text p { font-size: 1rem; line-height: 1.85; color: var(--grey); font-weight: 300; margin-bottom: 20px; }
+  .about-text p strong { color: var(--white); font-weight: 500; }
+
+  .about-meta { display: flex; flex-direction: column; gap: 0; }
+
+  .meta-row { display: flex; border-bottom: 1px solid rgba(255,255,255,.06); padding: 18px 0; }
+
+  .meta-key {
+    font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--red); width: 160px; flex-shrink: 0;
+  }
+
+  .meta-val { font-size: .95rem; color: var(--white); font-weight: 400; }
+
+  /* ── FEATURES ── */
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+
+  .feature-card {
+    background: var(--navy-mid); padding: 40px 36px;
+    position: relative; overflow: hidden; transition: transform .3s;
+  }
+
+  .feature-card::before {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: var(--red); transform: scaleX(0); transition: transform .3s; transform-origin: left;
+  }
+
+  .feature-card:hover { transform: translateY(-4px); }
+  .feature-card:hover::before { transform: scaleX(1); }
+
+  .feature-num { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; color: rgba(204,31,31,.12); line-height: 1; margin-bottom: 16px; letter-spacing: .05em; }
+  .feature-icon { font-size: 1.8rem; margin-bottom: 20px; display: block; }
+  .feature-title { font-family: 'DM Sans', sans-serif; font-weight: 700; margin-bottom: 12px; color: var(--white); text-transform: uppercase; letter-spacing: .05em; font-size: .9rem; }
+  .feature-desc { font-size: .88rem; line-height: 1.7; color: var(--grey); font-weight: 300; }
+
+  /* ── ROLES ── */
+  .roles { background: var(--navy-mid); }
+
+  .roles-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+
+  .role-card {
+    background: var(--navy); border: 1px solid rgba(255,255,255,.06);
+    border-radius: 4px; padding: 28px 20px; text-align: center; transition: all .3s;
+  }
+
+  .role-card:hover { border-color: var(--red); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(204,31,31,.15); }
+
+  .role-icon { font-size: 2.2rem; margin-bottom: 16px; display: block; }
+  .role-name { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: .08em; color: var(--white); margin-bottom: 8px; }
+  .role-tag { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; color: var(--red); text-transform: uppercase; }
+
+  /* ── VIDEOS ── */
+  .videos { background: var(--navy); }
+
+  .video-main-player {
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,.07);
+    margin-bottom: 20px;
+    position: relative;
+    aspect-ratio: 9/16;
+    max-height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+
+  .video-main-player video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .video-main-label {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(204,31,31,.9);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 2px;
+    color: white;
+  }
+
+  .videos-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .video-thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .video-thumb {
+    background: var(--navy-mid);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    transition: all .25s;
+    position: relative;
+  }
+
+  .video-thumb:hover { border-color: rgba(204,31,31,.5); background: rgba(204,31,31,.06); }
+  .video-thumb.active { border-color: var(--red); background: rgba(204,31,31,.1); }
+
+  .video-thumb.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--red);
+    border-radius: 6px 0 0 6px;
+  }
+
+  .thumb-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+    background: #000;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .thumb-preview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.4);
+  }
+
+  .play-overlay svg { width: 18px; height: 18px; fill: white; }
+
+  .thumb-info { flex: 1; min-width: 0; }
+
+  .thumb-num {
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+    letter-spacing: .15em;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .thumb-title {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--white);
+    line-height: 1.3;
+  }
+
+  .thumb-desc {
+    font-size: .72rem;
+    color: var(--grey);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  /* ── STACK ── */
+  .stack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+
+  .stack-block { border-left: 3px solid var(--red); padding: 0 0 0 28px; }
+
+  .stack-cat { font-family: 'DM Mono', monospace; font-size: .65rem; letter-spacing: .18em; text-transform: uppercase; color: var(--red); margin-bottom: 12px; }
+  .stack-item { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--white); letter-spacing: .05em; line-height: 1.2; }
+  .stack-sub { font-size: .8rem; color: var(--grey); margin-top: 6px; font-weight: 300; line-height: 1.6; }
+
+  /* ── TIMELINE ── */
+  .timeline { background: var(--navy-mid); }
+
+  .timeline-track {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    position: relative; gap: 0;
+  }
+
+  .timeline-track::before {
+    content: ''; position: absolute; top: 32px; left: 10%; right: 10%;
+    height: 2px; background: linear-gradient(to right, var(--red), rgba(204,31,31,.3));
+  }
+
+  .tl-step { display: flex; flex-direction: column; align-items: center; padding: 0 20px; text-align: center; }
+
+  .tl-dot {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--navy); border: 3px solid var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 24px; z-index: 1;
+    box-shadow: 0 0 0 6px var(--navy-mid); transition: transform .3s;
+  }
+
+  .tl-step:hover .tl-dot { transform: scale(1.15); }
+  .tl-date { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--red); letter-spacing: .1em; margin-bottom: 8px; }
+  .tl-desc { font-size: .82rem; color: var(--grey); line-height: 1.6; font-weight: 300; }
+
+  /* ── SWOT ── */
+  .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+
+  .swot-card { padding: 48px 40px; position: relative; }
+
+  .swot-card.positivos { background: rgba(204,31,31,.08); border: 1px solid rgba(204,31,31,.2); }
+  .swot-card.negativos { background: rgba(15,25,35,.8); border: 1px solid rgba(255,255,255,.06); }
+  .swot-card.oport { background: rgba(74,144,217,.06); border: 1px solid rgba(74,144,217,.2); }
+  .swot-card.ameacas { background: rgba(15,25,35,.6); border: 1px solid rgba(255,255,255,.04); }
+
+  .swot-label { font-family: 'DM Mono', monospace; font-size: .65rem; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 16px; }
+  .swot-card.positivos .swot-label { color: var(--red); }
+  .swot-card.negativos .swot-label { color: var(--grey); }
+  .swot-card.oport .swot-label { color: var(--accent); }
+  .swot-card.ameacas .swot-label { color: var(--grey); }
+
+  .swot-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: .05em; margin-bottom: 20px; }
+  .swot-card.positivos .swot-title { color: var(--red); }
+  .swot-card.negativos .swot-title { color: var(--white); }
+  .swot-card.oport .swot-title { color: var(--accent); }
+  .swot-card.ameacas .swot-title { color: var(--white); }
+
+  .swot-text { font-size: .92rem; line-height: 1.75; color: var(--grey); font-weight: 300; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #090f16; padding: 48px 80px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,.04);
+  }
+
+  .footer-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: .1em; }
+  .footer-brand span { color: var(--red); }
+
+  .footer-info {
+    font-size: .78rem; color: var(--grey);
+    font-family: 'DM Mono', monospace; letter-spacing: .05em;
+    text-align: right; line-height: 1.8;
+  }
+
+  .red-bar { height: 4px; background: linear-gradient(to right, var(--red), rgba(204,31,31,.0)); }
+
+  /* ── FADE IN ── */
+  .fade-in { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    section { padding: 60px 24px; }
+    .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 80px; }
+    .hero-right { display: none; }
+    .hero-left { padding: 60px 24px 60px; }
+    .about-grid, .stack-grid, .roles-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .timeline-track { grid-template-columns: 1fr 1fr; }
+    .swot-grid { grid-template-columns: 1fr; }
+    .videos-layout { grid-template-columns: 1fr; }
+    .video-thumbs { flex-direction: row; flex-wrap: wrap; }
+    .video-thumb { flex: 1 1 45%; }
+    footer { flex-direction: column; gap: 20px; text-align: center; }
+    .footer-info { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">MATECNIC<span>.</span>CALENDAR</div>
+  <ul class="nav-links">
+    <li><a href="#sobre">Sobre</a></li>
+    <li><a href="#funcionalidades">Funcionalidades</a></li>
+    <li><a href="#perfis">Perfis</a></li>
+    <li><a href="#demonstracao">Demo</a></li>
+    <li><a href="#tecnologias">Tecnologias</a></li>
+    <li><a href="#cronograma">Cronograma</a></li>
+    <li><a href="#analise">Análise</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-label">Calendário de Marcação de Férias</div>
+    <h1 class="hero-title">
+      Matecnic
+      <span>Calendar</span>
+    </h1>
+    <p class="hero-desc">
+      Uma aplicação mobile de gestão de férias para colaboradores da empresa Matecnic, desenvolvida para simplificar pedidos, centralizar informação e tornar o processo mais eficiente.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">Android</span>
+      <span class="badge">Java</span>
+      <span class="badge">Spring Boot</span>
+      <span class="badge">SQL Server</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="phone-logo">M</div>
+        <div class="mini-calendar">
+          <div class="mini-cal-header">Maio de 2026</div>
+          <div class="mini-cal-grid">
+            <div class="mini-cal-day">S</div><div class="mini-cal-day">T</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">Q</div><div class="mini-cal-day">S</div><div class="mini-cal-day">S</div><div class="mini-cal-day">D</div>
+            <div class="mini-cal-day"></div><div class="mini-cal-day"></div><div class="mini-cal-day"></div><div class="mini-cal-day"></div><div class="mini-cal-day"></div><div class="mini-cal-day">1</div><div class="mini-cal-day">2</div>
+            <div class="mini-cal-day">3</div><div class="mini-cal-day">4</div><div class="mini-cal-day">5</div><div class="mini-cal-day marked">6</div><div class="mini-cal-day marked">7</div><div class="mini-cal-day marked">8</div><div class="mini-cal-day">9</div>
+            <div class="mini-cal-day">10</div><div class="mini-cal-day">11</div><div class="mini-cal-day">12</div><div class="mini-cal-day">13</div><div class="mini-cal-day">14</div><div class="mini-cal-day">15</div><div class="mini-cal-day">16</div>
+            <div class="mini-cal-day">17</div><div class="mini-cal-day">18</div><div class="mini-cal-day">19</div><div class="mini-cal-day">20</div><div class="mini-cal-day">21</div><div class="mini-cal-day">22</div><div class="mini-cal-day">23</div>
+            <div class="mini-cal-day">24</div><div class="mini-cal-day">25</div><div class="mini-cal-day">26</div><div class="mini-cal-day">27</div><div class="mini-cal-day">28</div><div class="mini-cal-day">29</div><div class="mini-cal-day active">31</div>
+          </div>
+        </div>
+        <div class="phone-btn">Marcar</div>
+        <div class="phone-btn" style="margin-top:6px;">Estado Marcações</div>
+      </div>
+    </div>
+    <div class="hero-decor"></div>
+  </div>
+</div>
+
+<div class="red-bar"></div>
+
+<!-- SOBRE -->
+<section class="about" id="sobre">
+  <div class="section-label">01 — Sobre o Projeto</div>
+  <h2 class="section-title">O que é o<br>Matecnic Calendar?</h2>
+  <div class="about-grid fade-in">
+    <div class="about-text">
+      <p>O <strong>Matecnic Calendar</strong> é uma aplicação mobile desenvolvida no âmbito do Projeto de Aptidão Profissional (PAP) do curso de <strong>Gestão e Programação de Sistemas Informáticos</strong>.</p>
+      <p>O objetivo central é resolver um problema real na empresa <strong>Matecnic</strong>: a gestão de férias dos seus colaboradores. A aplicação substitui processos manuais e fragmentados por uma solução centralizada, rápida e segura.</p>
+      <p>Através de diferentes perfis de utilizador — colaborador, chefe, gerente e administrador — cada interveniente tem acesso apenas às funcionalidades relevantes para o seu cargo, garantindo uma cadeia de aprovação clara e eficiente.</p>
+    </div>
+    <div class="about-meta">
+      <div class="meta-row"><span class="meta-key">Projeto</span><span class="meta-val">Matecnic Calendar</span></div>
+      <div class="meta-row"><span class="meta-key">Desenvolvedor</span><span class="meta-val">Tomás Da Silva Ramos</span></div>
+      <div class="meta-row"><span class="meta-key">Curso</span><span class="meta-val">Gestão e Programação de Sistemas Informáticos</span></div>
+      <div class="meta-row"><span class="meta-key">Escola</span><span class="meta-val">Escola Profissional de Aveiro</span></div>
+      <div class="meta-row"><span class="meta-key">EPEP</span><span class="meta-val">Matecnic — Master Technology Solutions</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONALIDADES -->
+<section id="funcionalidades">
+  <div class="section-label">02 — Funcionalidades</div>
+  <h2 class="section-title">O que a app faz</h2>
+  <div class="features-grid">
+    <div class="feature-card fade-in">
+      <div class="feature-num">01</div>
+      <div class="feature-title">Autenticação Segura</div>
+      <p class="feature-desc">Login protegido com credenciais únicas por utilizador. Cada perfil acede apenas às funcionalidades correspondentes ao seu cargo na empresa.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-num">02</div>
+      <div class="feature-title">Gestão de Utilizadores</div>
+      <p class="feature-desc">Criação, edição e organização de todos os colaboradores da empresa com atribuição de cargo, departamento e permissões de acesso.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-num">03</div>
+      <div class="feature-title">Marcação de Férias</div>
+      <p class="feature-desc">Calendário interativo para selecionar e submeter pedidos de férias. O colaborador visualiza o estado das suas marcações em tempo real.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-num">04</div>
+      <div class="feature-title">Cálculo Automático de Dias</div>
+      <p class="feature-desc">O sistema calcula automaticamente o total de dias de férias disponíveis, usados e restantes, actualizando-se a cada aprovação ou recusa.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-num">05</div>
+      <div class="feature-title">Relatórios PDF e Excel</div>
+      <p class="feature-desc">Geração automática de documentos com o resumo das férias aprovadas — disponíveis em PDF para envio formal e Excel para análise de dados.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-num">06</div>
+      <div class="feature-title">Sistema de Notificações</div>
+      <p class="feature-desc">Notificações automáticas para cada etapa do processo: submissão, aprovação, recusa e alterações de estado das marcações.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PERFIS -->
+<section class="roles" id="perfis">
+  <div class="section-label">03 — Perfis de Utilizador</div>
+  <h2 class="section-title">Cinco cargos,<br>cinco experiências</h2>
+  <div class="roles-grid fade-in">
+    <div class="role-card">
+      <div class="role-name">Colaborador</div>
+      <div class="role-tag">ROLE_USER</div>
+    </div>
+    <div class="role-card">
+      <div class="role-name">Colaborador s/ Chefia</div>
+      <div class="role-tag">ROLE_COLABCHEFE</div>
+    </div>
+    <div class="role-card">
+      <div class="role-name">Chefia</div>
+      <div class="role-tag">ROLE_CHEFE</div>
+    </div>
+    <div class="role-card">
+      <div class="role-name">Gerência</div>
+      <div class="role-tag">ROLE_GERENTE</div>
+    </div>
+    <div class="role-card">
+      <div class="role-name">Administrador</div>
+      <div class="role-tag">ROLE_ADMIN</div>
+    </div>
+  </div>
+  <p style="margin-top:40px; color:var(--grey); font-size:.9rem; max-width:620px; line-height:1.75; font-weight:300;">
+    Cada perfil determina o layout e as acções disponíveis. Um colaborador pode marcar as suas próprias férias; um chefe avalia os pedidos da sua equipa; a gerência tem visibilidade global; o administrador gere todos os utilizadores e configurações do sistema.
+  </p>
+</section>
+
+<!-- DEMONSTRAÇÃO EM VÍDEO -->
+<section class="videos" id="demonstracao">
+  <div class="section-label">04 — Demonstração</div>
+  <h2 class="section-title">App em<br>funcionamento</h2>
+
+  <div class="videos-layout fade-in">
+    <!-- Thumbnails à esquerda -->
+    <div class="video-thumbs" id="thumbList">
+
+      <div class="video-thumb active" onclick="selectVideo(0)">
+        <div class="thumb-preview">
+          <video src="vid1.mp4" muted preload="metadata"></video>
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-num">Vídeo 01</div>
+          <div class="thumb-title">Marcação do Colaborador</div>
+          <div class="thumb-desc">Execução de um pedido de férias</div>
+        </div>
+      </div>
+
+      <div class="video-thumb" onclick="selectVideo(1)">
+        <div class="thumb-preview">
+          <video src="vid2.mp4" muted preload="metadata"></video>
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-num">Vídeo 02</div>
+          <div class="thumb-title">Avaliação da Chefia</div>
+          <div class="thumb-desc">Análise do pedido do colaborador</div>
+        </div>
+      </div>
+
+      <div class="video-thumb" onclick="selectVideo(2)">
+        <div class="thumb-preview">
+          <video src="vid3.mp4" muted preload="metadata"></video>
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-num">Vídeo 03</div>
+          <div class="thumb-title">Avaliação Gerência</div>
+          <div class="thumb-desc">Análise por parte do 1º usuário da gerencia</div>
+        </div>
+      </div>
+
+      <div class="video-thumb" onclick="selectVideo(3)">
+        <div class="thumb-preview">
+          <video src="vid4.mp4" muted preload="metadata"></video>
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-num">Vídeo 04</div>
+          <div class="thumb-title">Avaliação Gerência</div>
+          <div class="thumb-desc">Análise por parte do 2º usuário da gerencia</div>
+        </div>
+      </div>
+
+      <div class="video-thumb" onclick="selectVideo(4)">
+        <div class="thumb-preview">
+          <video src="vid5.mp4" muted preload="metadata"></video>
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-num">Vídeo 05</div>
+          <div class="thumb-title">Administração</div>
+          <div class="thumb-desc">Gestão e governação de utilizadores</div>
+        </div>
+      </div>
+
+      <div class="video-thumb" onclick="selectVideo(5)">
+        <div class="thumb-preview">
+          <video src="vid6.mp4" muted preload="metadata"></video>
+          <div class="play-overlay">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="thumb-info">
+          <div class="thumb-num">Vídeo 06</div>
+          <div class="thumb-title">Relatórios PDF</div>
+          <div class="thumb-desc">Geração de relatórios de marcações em PDF</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Player principal à direita -->
+    <div>
+      <div class="video-main-player">
+        <div class="video-main-label" id="mainLabel">Vídeo 01 — Login & Autenticação</div>
+        <video id="mainVideo" src="vid1.mp4" controls autoplay muted playsinline></video>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECNOLOGIAS -->
+<section id="tecnologias" style="background: var(--navy-mid);">
+  <div class="section-label">05 — Stack Tecnológico</div>
+  <h2 class="section-title">Linguagens &<br>Frameworks</h2>
+  <div class="stack-grid fade-in">
+    <div class="stack-block">
+      <div class="stack-cat">Frontend · Mobile</div>
+      <div class="stack-item">Android Studio</div>
+      <div class="stack-sub">Interface desenvolvida em XML + Java nativo. Layouts adaptados a cada perfil de utilizador, com ConstraintLayout e design de componentes personalizados.</div>
+    </div>
+    <div class="stack-block">
+      <div class="stack-cat">Backend · API</div>
+      <div class="stack-item">Java + Spring Boot</div>
+      <div class="stack-sub">API REST construída com Spring Boot. Inclui camadas de Controller, Service e Repository, com geração de PDFs, ficheiros Excel e autenticação JWT.</div>
+    </div>
+    <div class="stack-block">
+      <div class="stack-cat">Base de Dados</div>
+      <div class="stack-item">Microsoft SQL Server 2019</div>
+      <div class="stack-sub">Base de dados relacional para armazenamento de utilizadores, marcações, departamentos e histórico de aprovações. Gerida via SQL Server Management Studio.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CRONOGRAMA -->
+<section class="timeline" id="cronograma">
+  <div class="section-label">06 — Cronograma</div>
+  <h2 class="section-title">Execução do projeto</h2>
+  <div class="timeline-track fade-in">
+    <div class="tl-step">
+      <div class="tl-dot">🎯</div>
+      <div class="tl-date">Abr 2025</div>
+      <div class="tl-desc">Definição de objetivos e estrutura do projeto. Planeamento de funcionalidades e arquitetura da aplicação.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-dot">📚</div>
+      <div class="tl-date">Mai 2025</div>
+      <div class="tl-desc">Estudo das tecnologias e criação da base de dados. Definição do modelo de dados e primeiros esboços da interface.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-dot">💻</div>
+      <div class="tl-date">Out–Dez 2025</div>
+      <div class="tl-desc">Desenvolvimento intensivo do frontend e backend. Implementação das funcionalidades principais e integração com a API.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-dot">⚙️</div>
+      <div class="tl-date">Jan 2026</div>
+      <div class="tl-desc">Finalização do projeto, testes, ajustes e preparação da apresentação PAP.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ANÁLISE -->
+<section id="analise">
+  <div class="section-label">07 — Análise do Projeto</div>
+  <h2 class="section-title">Pontos fortes &<br>dificuldades</h2>
+  <div class="swot-grid fade-in">
+    <div class="swot-card positivos">
+      <div class="swot-label">✓ Pontos Positivos</div>
+      <div class="swot-title">Praticidade</div>
+      <p class="swot-text">A aplicação traz uma enorme praticidade no dia a dia dos colaboradores e da empresa. O processo de marcação de férias, que antes era manual e sujeito a erros, passa a ser digital, rápido e rastreável.</p>
+    </div>
+    <div class="swot-card negativos">
+      <div class="swot-label">✗ Pontos Negativos</div>
+      <div class="swot-title">Integração</div>
+      <p class="swot-text">A integração da aplicação com o servidor interno da empresa revelou-se a maior complexidade técnica do projeto, exigindo configurações de rede e segurança adicionais para funcionar no ambiente corporativo.</p>
+    </div>
+    <div class="swot-card oport">
+      <div class="swot-label">→ Oportunidades</div>
+      <div class="swot-title">Crescimento</div>
+      <p class="swot-text">Os conhecimentos adquiridos ao longo deste projeto — Spring Boot, Android nativo, SQL Server — abrem portas no mercado de trabalho. A aplicação pode ainda ser escalada para outras funcionalidades de RH.</p>
+    </div>
+    <div class="swot-card ameacas">
+      <div class="swot-label">⚠ Ameaças</div>
+      <div class="swot-title">Concorrência</div>
+      <p class="swot-text">Existem no mercado soluções comerciais que desempenham papel semelhante. A vantagem do Matecnic Calendar é ser construído especificamente para as necessidades e processos internos da empresa.</p>
+    </div>
+  </div>
+</section>
+
+<div class="red-bar"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">MATECNIC<span>.</span>CALENDAR</div>
+  <div class="footer-info">
+    Tomás Da Silva Ramos · 4DP<br>
+    Escola Profissional de Aveiro · EPEP: Matecnic<br>
+    PAP 2025–2026 · Apresentação: 11/06/2026
+  </div>
+</footer>
+
+<script>
+  const videos = [
+    { src: 'vid1.mp4', label: 'Vídeo 01 — Login & Autenticação' },
+    { src: 'vid2.mp4', label: 'Vídeo 02 — Dashboard Principal' },
+    { src: 'vid3.mp4', label: 'Vídeo 03 — Marcação de Férias' },
+    { src: 'vid4.mp4', label: 'Vídeo 04 — Estado das Marcações' },
+    { src: 'vid5.mp4', label: 'Vídeo 05 — Aprovação / Recusa' },
+    { src: 'vid6.mp4', label: 'Vídeo 06 — Relatórios PDF / Excel' },
+  ];
+
+  function selectVideo(idx) {
+    const mainVideo = document.getElementById('mainVideo');
+    const mainLabel = document.getElementById('mainLabel');
+    const thumbs = document.querySelectorAll('.video-thumb');
+
+    thumbs.forEach((t, i) => t.classList.toggle('active', i === idx));
+    mainVideo.src = videos[idx].src;
+    mainLabel.textContent = videos[idx].label;
+    mainVideo.play();
+  }
+
+  // Set thumbnail seek point to 1s for preview
+  document.querySelectorAll('.thumb-preview video').forEach(v => {
+    v.addEventListener('loadedmetadata', () => { v.currentTime = 1; });
+  });
+
+  // Fade-in on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
